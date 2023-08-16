@@ -59,6 +59,9 @@ class ComputeV1(
         HTTP2 = enum.auto()
         GRPC = enum.auto()
 
+    class SessionAffinityProtocol(enum.Enum):
+        HTTP = enum.auto()
+
     def create_health_check(
         self,
         name: str,
@@ -94,6 +97,38 @@ class ComputeV1(
 
     def delete_health_check(self, name):
         self._delete_resource(self.api.healthChecks(), "healthCheck", name)
+
+    def create_session_affinity_policy(
+        self,
+        name: str,
+        protocol: SessionAffinityProtocol,
+    ) -> "GcpResponse":
+        if protocol is self.SessionAffinityProtocol.HTTP:
+            # FIXME
+            session_affinity_field = "httpSessionAffinity"
+        else:
+            raise TypeError(f"Unexpected Session affinity protocol: {protocol}")
+
+        affinity_header = _TEST_AFFINITY_METADATA_KEY 
+
+        return self._insert_resource(
+            self.api.sessionAffinityPolicies(),
+            {
+                "name": name,
+                "type": protocol.name,
+                # TODO
+            },
+        )
+
+    def list_session_affinity_policy(self):
+        return self._list_resource(self.api.sessionAffnityPolicies())
+
+    def delete_session_affinity_policy(self, name):
+        self._delete_resource(
+            self.api.sessionAffinityPolicies(),
+            "sessionAffinityPolicy", # TODO what is this?
+            name
+        )
 
     def create_firewall_rule(
         self,
