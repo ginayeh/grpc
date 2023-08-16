@@ -59,14 +59,18 @@ class LoadBalancerStatsServiceClient(framework.rpc.grpc.GrpcClientHelper):
         *,
         num_rpcs: int,
         timeout_sec: Optional[int] = STATS_PARTIAL_RESULTS_TIMEOUT_SEC,
+        metadata: list[str] = None,
     ) -> LoadBalancerStatsResponse:
+        print("[gina] grpc_testing.py get_client_stats")
         if timeout_sec is None:
             timeout_sec = self.STATS_PARTIAL_RESULTS_TIMEOUT_SEC
 
         return self.call_unary_with_deadline(
             rpc="GetClientStats",
             req=_LoadBalancerStatsRequest(
-                num_rpcs=num_rpcs, timeout_sec=timeout_sec
+                num_rpcs=num_rpcs,
+                timeout_sec=timeout_sec,
+                metadata=metadata,
             ),
             deadline_sec=timeout_sec,
             log_level=logging.INFO,
