@@ -56,6 +56,7 @@ class BaselineTest(xds_k8s_testcase.RegularXdsKubernetesTestCase):
             self.assertXdsConfigExists(test_client)
 
         with self.subTest("9_test_server_received_rpcs_from_test_client"):
+            print("[gina] baseline_test.py")
             self.assertSuccessfulRpcs(test_client)
 
 

@@ -286,6 +286,7 @@ class XdsKubernetesBaseTestCase(absltest.TestCase):
     def assertSuccessfulRpcs(
         self, test_client: XdsTestClient, num_rpcs: int = 100
     ):
+        logger.info("[gina] xds_k8s_teatcase.py assertSuccessfulRpcs") 
         lb_stats = self.getClientRpcStats(test_client, num_rpcs)
         self.assertAllBackendsReceivedRpcs(lb_stats)
         failed = int(lb_stats.num_failures)
