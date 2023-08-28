@@ -489,6 +489,31 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
         )
         return route
 
+    def _create_session_affinity_policy(self, template, **kwargs) -> k8s.GcpSessionAffinityPolicy:
+        policy = self._create_from_template(
+            template,
+            custom_object=True,
+            **kwargs,
+        )
+        if not (
+            isinstance(policy, k8s.GcpSessionAffinityPolicy) and policy.kind == "GCPSessionAffinityPolicy"
+        ):
+            raise _RunnerError(
+                f"Expected ResourceInstance[GCPSessionAffinityPolicy] to be"
+                f" created from manifest {template}" 
+            )
+        if policy.metadata.name != kwargs["policy_name"]:
+            raise _RunnerError(
+                "ResourceInstance[GCPSessionAffinityPolicy] created with"
+                f" unexpected name: {policy.metadata.name}"
+            )
+        logger.debug(
+            "ResourceInstance[GCPSessionAffinityPolicy] %s created at %s",
+            policy.metadata.name,
+            policy.metadata.creation_timestamp,
+        )
+        return policy
+
     def _delete_gamma_mesh(self, name, wait_for_deletion=True):
         logger.info("Deleting GAMMA mesh %s", name)
         try:
@@ -512,6 +537,18 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
         if wait_for_deletion:
             self.k8s_namespace.wait_for_get_gamma_route_deleted(name)
         logger.debug("GRPCRoute %s deleted", name)
+
+    def _delete_session_affinity_policy(self, name, wait_for_deletion=True):
+        logger.info("Deleting GCPSessionAffinityPolicy %s", name)
+        try:
+            self.k8s_namespace.delete_session_affinity_policy(name)
+        except (retryers.RetryError, k8s.NotFound) as e:
+            logger.info("GCPSessionAffinityPolicy %s deletion failed: %s", name, e)
+            return
+
+        if wait_for_deletion:
+            self.k8s_namespace.wait_for_get_session_affinity_policy_deleted(name)
+        logger.debug("GCPSessionAffinityPolicy %s deleted", name)
 
     def _create_service(self, template, **kwargs) -> k8s.V1Service:
         service = self._create_from_template(template, **kwargs)
