@@ -54,6 +54,7 @@ V1Namespace = client.V1Namespace
 DynResourceInstance = dynamic_res.ResourceInstance
 GammaMesh = DynResourceInstance
 GammaGrpcRoute = DynResourceInstance
+GcpSessionAffinityPolicy = DynResourceInstance
 
 _timedelta = datetime.timedelta
 _ApiException = client.ApiException
@@ -241,6 +242,13 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
         return self._get_dynamic_api(
             "gateway.networking.k8s.io/v1alpha2",
             "GRPCRoute",
+        )
+
+    @functools.cached_property  # pylint: disable=no-member
+    def api_session_affinity_policy(self) -> dynamic_res.Resource:
+        return self._get_dynamic_api(
+            "gateway.networking.k8s.io/v1beta1",
+            "GCPSessionAffinityPolicy",
         )
 
     def _refresh_auth(self):
@@ -447,6 +455,9 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
 
     def get_gamma_route(self, name) -> Optional[GammaGrpcRoute]:
         return self._get_dyn_resource(self.api_grpc_route, name)
+    
+    def get_session_affinity_policy(self, name) -> Optional[GcpSessionAffinityPolicy]:
+        return self._get_dyn_resource(self.api_session_affinity_policy, name)
 
     def get_service_account(self, name) -> V1Service:
         return self._get_resource(
@@ -509,6 +520,19 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
             grace_period_seconds=grace_period_seconds,
         )
 
+    def delete_session_affinity_policy(
+        self,
+        name: str,
+        grace_period_seconds=DELETE_GRACE_PERIOD_SEC,
+    ) -> None:
+        self._execute(
+            self.api_session_affinity_policy.delete,
+            name=name,
+            namespace=self.name,
+            propagation_policy="Foreground",
+            grace_period_seconds=grace_period_seconds,
+        )
+
     def get(self) -> V1Namespace:
         return self._get_resource(self._api.core.read_namespace, self.name)
 
@@ -560,6 +584,21 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
             check_result=lambda route: route is None,
         )
         retryer(self.get_gamma_route, name)
+
+    def wait_for_get_session_affinity_policy_deleted(
+        self,
+        name: str,
+        timeout_sec: int = WAIT_MEDIUM_TIMEOUT_SEC,
+        wait_sec: int = WAIT_MEDIUM_SLEEP_SEC,
+    ) -> None:
+        retryer = retryers.constant_retryer(
+            wait_fixed=_timedelta(seconds=wait_sec),
+            timeout=_timedelta(seconds=timeout_sec),
+            check_result=lambda policy: policy is None,
+        )
+        retryer(self.get_session_affinity_policy, name)
+
+
 
     def wait_for_service_account_deleted(
         self,

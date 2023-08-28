@@ -206,6 +206,14 @@ class GammaServerRunner(KubernetesServerRunner):
             secure_mode=secure_mode,
         )
 
+    def createSessionAffinityPolicy(self):
+        # TODO(ginayeh)
+        self.saPolicy = self._create_session_affinity_policy(
+            "gamma/session_affinity_policy.yaml",
+            policy_name=self.policy_name,
+            namespace_name=self.k8s_namespace.name,
+        )
+
     # pylint: disable=arguments-differ
     def cleanup(self, *, force=False, force_namespace=False):
         try:
