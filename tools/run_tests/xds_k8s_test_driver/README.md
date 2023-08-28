@@ -38,7 +38,9 @@ sudo apt-get install python3-venv
 ##### Getting Started
 
 1. If you haven't, [initialize](https://cloud.google.com/sdk/docs/install-sdk) gcloud SDK
-2. Activate gcloud [configuration](https://cloud.google.com/sdk/docs/configurations) with your project 
+2. Activate gcloud [configuration](https://cloud.google.com/sdk/docs/configurations) with your project
+[comment]: <> (activate <name> is there a config file that we can activate/apply?)
+[comment]: <> (default)
 3. Enable gcloud services:
    ```shell
    gcloud services enable \
@@ -54,7 +56,7 @@ sudo apt-get install python3-venv
 
 #### Configure GKE cluster
 This is an example outlining minimal requirements to run the [baseline tests](xds-baseline-tests).
- 
+[comment]: <> (link is broken, https://github.com/grpc/grpc/blob/master/tools/run_tests/xds_k8s_test_driver/tests/baseline_test.py)
 Update gloud sdk:
 ```shell
 gcloud -q components update
@@ -91,7 +93,10 @@ gcloud container clusters create "${CLUSTER_NAME}" \
  --workload-metadata=GKE_METADATA \
  --tags=allow-health-checks
 ```
-
+[comment]: <> (ERROR: (gcloud.container.clusters.create) ResponseError: code=400, message=IP aliases cannot be used with a legacy network.)
+[comment]: <> (gcloud compute networks list)
+[comment]: <> (gcloud container clusters create "${CLUSTER_NAME}"  --scopes=cloud-platform  --zone="${ZONE}"  --enable-ip-alias  --workload-pool="${PROJECT_ID}.svc.id.goog"  --workload-metadata=GKE_METADATA  --tags=allow-health-checks --network=default-vpc)
+[comment]: <> (DONE)
 For security tests you also need to create CAs and configure the cluster to use those CAs
 as described
 [here](https://cloud.google.com/traffic-director/docs/security-proxyless-setup#configure-cas).
@@ -107,6 +112,8 @@ gcloud compute firewall-rules create "${RESOURCE_PREFIX}-allow-health-checks" \
   --target-tags=allow-health-checks \
   --rules=tcp:8080-8100
 ```
+[comment]: <> (ERROR: (gcloud.compute.firewall-rules.create) unrecognized arguments: -allow-health-checks)
+[comment]: <> (DONE after cluster created)
 
 ##### Setup GCP Service Account
 
@@ -117,6 +124,7 @@ with [workload identity](https://cloud.google.com/kubernetes-engine/docs/how-to/
 gcloud iam service-accounts create "${WORKLOAD_SA_NAME}" \
   --display-name="xDS K8S Interop Tests Workload Identity Service Account"
 ```
+[comment]: <> (Skipped. Already created in grpc-testing project)
 
 Enable the service account to [access the Traffic Director API](https://cloud.google.com/traffic-director/docs/prepare-for-envoy-setup#enable-service-account).
 ```shell
@@ -124,6 +132,7 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
    --member="serviceAccount:${WORKLOAD_SA_EMAIL}" \
    --role="roles/trafficdirector.client"
 ```
+[comment]: <> (Skipped. Already created in grpc-testing project)
 
 ##### Allow access to images
 The test framework needs read access to the client and server images and the bootstrap
@@ -135,6 +144,7 @@ gsutil command. For example, to grant access to images stored in `grpc-testing` 
 ```sh
 gsutil iam ch "serviceAccount:${GCE_SA}:objectViewer" gs://artifacts.grpc-testing.appspot.com/
 ```
+[comment]: <> (Already made)
 
 ##### Allow test driver to configure workload identity automatically
 Test driver will automatically grant `roles/iam.workloadIdentityUser` to 
@@ -148,6 +158,7 @@ If you're running test framework locally, and you have `roles/owner` to your
 project, **you can skip this step**.  
 If you're configuring the test framework to run on a CI: use `roles/owner`
 account once to allow test framework to grant `roles/iam.workloadIdentityUser`.
+[comment]: <> (shall I add ginayeh@ at https://pantheon.corp.google.com/iam-admin/iam?project=grpc-testing)
 
 ```shell
 # Assuming CI is using Compute Engine default service account.
@@ -180,6 +191,8 @@ gcloud container clusters get-credentials "${CLUSTER_NAME}" --zone "${ZONE}"
 # Save generated kube context name
 export KUBE_CONTEXT="$(kubectl config current-context)"
 ``` 
+[comment]: <> (gcloud container clusters get-credentials interop-test-psm-basic  --zone us-central1-c)
+[comment]: <> (Done)
 
 #### Install python dependencies
 
@@ -200,6 +213,7 @@ python -m grpc_tools.protoc --proto_path=../../../ \
     src/proto/grpc/testing/messages.proto \
     src/proto/grpc/testing/test.proto
 ```
+[comment]: <> (Done)
 
 # Basic usage
 
@@ -276,6 +290,9 @@ python -m tests.baseline_test --flagfile="config/local-dev.cfg"
 # Same as above, but using the helper script
 ./run.sh tests/baseline_test.py
 ```
+[comment]: <> ([  FAILED  ] setUpClass (__main__.BaselineTest))
+[comment]: <> (kubernetes.config.config_exception.ConfigException: Invalid kube-config file. Expected object with name ${KUBE_CONTEXT} in /Users/ginayeh/.kube/config/contexts list)
+[comment]: <> ("venv/lib/python3.9/site-packages/kubernetes/config/kube_config.py")
 
 ### xDS Security Tests
 Test suite meant to verify mTLS/TLS features. Note that this requires
