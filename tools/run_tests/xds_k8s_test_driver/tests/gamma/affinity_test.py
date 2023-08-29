@@ -28,18 +28,29 @@ _XdsTestClient = xds_k8s_testcase.XdsTestClient
 
 class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
     def test_ping_pong(self):
-        with self.subTest("1_run_test_server"):
-            test_server: _XdsTestServer = self.startTestServers()[0]
+        REPLICA_COUNT = 3
 
-        with self.subTest("2_create_ssa_policy"):
+        test_servers: List[_XdsTestServer]
+        with self.subTest("01_run_test_server"):
+            test_servers = self.startTestServers(replica_count=REPLICA_COUNT)
+
+        with self.subTest("02_create_ssa_policy"):
 #            self.server_runner.k8s_namespace.get_gamma_mesh('test')
             self.server_runner.createSessionAffinityPolicy()
 
-        with self.subTest("3_start_test_client"):
-            test_client: _XdsTestClient = self.startTestClient(test_server)
+        # Default is round robin LB policy.
 
-        with self.subTest("4_test_server_received_rpcs_from_test_client"):
-            self.assertSuccessfulRpcs(test_client)
+        with self.subTest("03_start_test_client"):
+            test_client: _XdsTestClient = self.startTestClient(test_servers[0])
+
+        #4 send 1st RPC
+        #5 retrives cookie from rpc header
+        with self.subTest("04_test_server_received_rpcs_from_test_client"):
+            cookie = self.assertSuccessfulRpcs(test_client)
+
+        #5 retrives cookie from rpc header
+        #6 send 10 RPCs with cookie
+        #7 ensure all are sending to the same backend
 
 
 if __name__ == "__main__":

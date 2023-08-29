@@ -57,8 +57,8 @@ class BaselineTest(xds_k8s_testcase.RegularXdsKubernetesTestCase):
 
         with self.subTest("9_test_server_received_rpcs_from_test_client"):
             print("[gina] baseline_test.py")
-            self.assertSuccessfulRpcs(test_client)
-
+            cookies = self.assertSuccessfulRpcs(test_client)
+            print(cookies)
 
 if __name__ == "__main__":
     absltest.main(failfast=True)
