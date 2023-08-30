@@ -65,6 +65,7 @@ class LoadBalancerStatsServiceClient(framework.rpc.grpc.GrpcClientHelper):
         if timeout_sec is None:
             timeout_sec = self.STATS_PARTIAL_RESULTS_TIMEOUT_SEC
 
+        print("[gina] call_unary_with_deadline")
         return self.call_unary_with_deadline(
             rpc="GetClientStats",
             req=_LoadBalancerStatsRequest(

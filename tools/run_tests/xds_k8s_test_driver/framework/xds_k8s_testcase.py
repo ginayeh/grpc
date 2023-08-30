@@ -317,21 +317,22 @@ class XdsKubernetesBaseTestCase(base_testcase.BaseTestCase):
     ) -> dict[str]:
         logger.info("[gina] xds_k8s_teatcase.py parseMetadata")
         cookies = dict()
+        p = ""
         for peer, metadatas in metadatas_by_peer.items():
+            p = peer
             for metadatas in metadatas.rpc_metadata:
                 for metadata in metadatas.metadata:
                     if metadata.key == "cookie":
                         cookies[peer] = metadata.value
-        # TODO(ginayeh)
-        cookies["fake-server-1"] = "fake-cookie-1"
-        cookies["fake-server-2"] = "fake-cookie-2"
+        # FIXME(ginayeh)
+        cookies[p] = "fake-cookie-1"
         return cookies
 
 
     def assertSuccessfulRpcs(
         self, test_client: XdsTestClient, num_rpcs: int = 100
     ) -> dict[str]:
-        logger.info("[gina] xds_k8s_teatcase.py assertSuccessfulRpcs") 
+        logger.info("[gina] xds_k8s_teatcase.py assertSuccessfulRpcs")
         lb_stats = self.getClientRpcStats(test_client, num_rpcs)
         self.assertAllBackendsReceivedRpcs(lb_stats)
         failed = int(lb_stats.num_failures)
@@ -457,8 +458,10 @@ class XdsKubernetesBaseTestCase(base_testcase.BaseTestCase):
         num_rpcs: int = 100,
     ):
         retryer = retryers.constant_retryer(
-            wait_fixed=datetime.timedelta(seconds=1),
-            timeout=datetime.timedelta(seconds=_TD_CONFIG_MAX_WAIT_SEC),
+            wait_fixed=datetime.timedelta(seconds=10),
+            # wait_fixed=datetime.timedelta(seconds=1),
+            # timeout=datetime.timedelta(seconds=_TD_CONFIG_MAX_WAIT_SEC),
+            timeout=datetime.timedelta(seconds=1),
             log_level=logging.INFO,
         )
         try:
