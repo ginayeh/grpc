@@ -490,29 +490,74 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
         return route
 
     def _create_session_affinity_policy(self, template, **kwargs) -> k8s.GcpSessionAffinityPolicy:
-        policy = self._create_from_template(
+        saPolicy = self._create_from_template(
             template,
             custom_object=True,
             **kwargs,
         )
         if not (
-            isinstance(policy, k8s.GcpSessionAffinityPolicy) and policy.kind == "GCPSessionAffinityPolicy"
+            isinstance(saPolicy, k8s.GcpSessionAffinityPolicy) and saPolicy.kind == "GCPSessionAffinityPolicy"
         ):
             raise _RunnerError(
                 f"Expected ResourceInstance[GCPSessionAffinityPolicy] to be"
-                f" created from manifest {template}" 
+                f" created from manifest {template}"
             )
-        if policy.metadata.name != kwargs["policy_name"]:
+        if saPolicy.metadata.name != kwargs["session_affinity_policy_name"]:
             raise _RunnerError(
                 "ResourceInstance[GCPSessionAffinityPolicy] created with"
-                f" unexpected name: {policy.metadata.name}"
+                f" unexpected name: {saPolicy.metadata.name}"
             )
         logger.debug(
             "ResourceInstance[GCPSessionAffinityPolicy] %s created at %s",
-            policy.metadata.name,
-            policy.metadata.creation_timestamp,
+            saPolicy.metadata.name,
+            saPolicy.metadata.creation_timestamp,
         )
-        return policy
+        return saPolicy
+
+    def _create_session_affinity_filter(self, template, **kwargs) -> k8s.GcpSessionAffinityFilter:
+        saFilter = self._create_from_template(
+            template,
+            custom_object=True,
+            **kwargs,
+        )
+        if not (
+            isinstance(saFilter, k8s.GcpSessionAffinityFilter) and saFilter.kind == "GCPSessionAffinityFilter"
+        ):
+            raise _RunnerError(
+                f"Expected ResourceInstance[GCPSessionAffinityFilter] to be"
+                f" created from manifest {template}"
+            )
+        if saFilter.metadata.name != kwargs["session_affinity_filter_name"]:
+            raise _RunnerError(
+                "ResourceInstance[GCPSessionAffinityFilter] created with"
+                f" unexpected name: {saFilter.metadata.name}"
+            )
+        logger.debug(
+            "ResourceInstance[GCPSessionAffinityFilter] %s created at %s",
+            saFilter.metadata.name,
+            saFilter.metadata.creation_timestamp,
+        )
+        return saFilter
+
+    def _create_service(self, template, **kwargs) -> k8s.V1Service:
+        service = self._create_from_template(template, **kwargs)
+        if not isinstance(service, k8s.V1Service):
+            raise _RunnerError(
+                f"Expected V1Service to be created from manifest {template}"
+            )
+        if service.metadata.name != kwargs["service_name"]:
+            raise _RunnerError(
+                "V1Service created with unexpected name: "
+                f"{service.metadata.name}"
+            )
+        logger.debug(
+            "V1Service %s created at %s",
+            service.metadata.self_link,
+            service.metadata.creation_timestamp,
+        )
+        return service
+
+
 
     def _delete_gamma_mesh(self, name, wait_for_deletion=True):
         logger.info("Deleting GAMMA mesh %s", name)
@@ -550,23 +595,17 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
             self.k8s_namespace.wait_for_get_session_affinity_policy_deleted(name)
         logger.debug("GCPSessionAffinityPolicy %s deleted", name)
 
-    def _create_service(self, template, **kwargs) -> k8s.V1Service:
-        service = self._create_from_template(template, **kwargs)
-        if not isinstance(service, k8s.V1Service):
-            raise _RunnerError(
-                f"Expected V1Service to be created from manifest {template}"
-            )
-        if service.metadata.name != kwargs["service_name"]:
-            raise _RunnerError(
-                "V1Service created with unexpected name: "
-                f"{service.metadata.name}"
-            )
-        logger.debug(
-            "V1Service %s created at %s",
-            service.metadata.self_link,
-            service.metadata.creation_timestamp,
-        )
-        return service
+    def _delete_session_affinity_filter(self, name, wait_for_deletion=True):
+        logger.info("Deleting GCPSessionAffinityFilter %s", name)
+        try:
+            self.k8s_namespace.delete_session_affinity_filter(name)
+        except (retryers.RetryError, k8s.NotFound) as e:
+            logger.info("GCPSessionAffinityFilter %s deletion failed: %s", name, e)
+            return
+
+        if wait_for_deletion:
+            self.k8s_namespace.wait_for_get_session_affinity_filter_deleted(name)
+        logger.debug("GCPSessionAffinityFilter %s deleted", name)
 
     def _delete_deployment(self, name, wait_for_deletion=True):
         logger.info("Deleting deployment %s", name)

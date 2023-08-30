@@ -210,7 +210,14 @@ class GammaServerRunner(KubernetesServerRunner):
         # TODO(ginayeh)
         self.saPolicy = self._create_session_affinity_policy(
             "gamma/session_affinity_policy.yaml",
-            policy_name=self.policy_name,
+            session_affinity_policy_name="ssa-policy-1",
+            namespace_name=self.k8s_namespace.name,
+        )
+
+    def createSessionAffinityFilter(self):
+        self.saFilter = self._create_session_affinity_filter(
+            "gamma/session_affinity_filter.yaml",
+            session_affinity_filter_name="ssa-filter-1",
             namespace_name=self.k8s_namespace.name,
         )
 

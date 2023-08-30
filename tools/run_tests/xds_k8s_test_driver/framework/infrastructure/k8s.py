@@ -55,6 +55,7 @@ DynResourceInstance = dynamic_res.ResourceInstance
 GammaMesh = DynResourceInstance
 GammaGrpcRoute = DynResourceInstance
 GcpSessionAffinityPolicy = DynResourceInstance
+GcpSessionAffinityFilter = DynResourceInstance
 
 _timedelta = datetime.timedelta
 _ApiException = client.ApiException
@@ -249,6 +250,13 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
         return self._get_dynamic_api(
             "gateway.networking.k8s.io/v1beta1",
             "GCPSessionAffinityPolicy",
+        )
+
+    @functools.cached_property  # pylint: disable=no-member
+    def api_session_affinity_filter(self) -> dynamic_res.Resource:
+        return self._get_dynamic_api(
+            "gateway.networking.k8s.io/v1beta1",
+            "GCPSessionAffinityFilter",
         )
 
     def _refresh_auth(self):
