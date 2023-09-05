@@ -464,32 +464,38 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
         )
         return mesh
 
-    def _create_gamma_route(self, template, **kwargs) -> k8s.GammaGrpcRoute:
+    # def _create_gamma_route(self, template, **kwargs) -> k8s.GammaGrpcRoute:
+    def _create_gamma_route(self, template, **kwargs) -> k8s.GammaHttpRoute:
         route = self._create_from_template(
             template,
             custom_object=True,
             **kwargs,
         )
         if not (
-            isinstance(route, k8s.GammaGrpcRoute) and route.kind == "GRPCRoute"
+            # isinstance(route, k8s.GammaGrpcRoute) and route.kind == "GRPCRoute"
+            isinstance(route, k8s.GammaHttpRoute) and route.kind == "HTTPRoute"
         ):
             raise _RunnerError(
-                f"Expected ResourceInstance[GRPCRoute] to be created from"
+                # f"Expected ResourceInstance[GRPCRoute] to be created from"
+                f"Expected ResourceInstance[HTTPRoute] to be created from"
                 f" manifest {template}"
             )
         if route.metadata.name != kwargs["route_name"]:
             raise _RunnerError(
-                "ResourceInstance[GRPCRoute] created with unexpected name: "
+                # "ResourceInstance[GRPCRoute] created with unexpected name: "
+                "ResourceInstance[HTTPRoute] created with unexpected name: "
                 f"{route.metadata.name}"
             )
         logger.debug(
-            "ResourceInstance[GRPCRoute] %s created at %s",
+            # "ResourceInstance[GRPCRoute] %s created at %s",
+            "ResourceInstance[HTTPRoute] %s created at %s",
             route.metadata.name,
             route.metadata.creation_timestamp,
         )
         return route
 
     def _create_session_affinity_policy(self, template, **kwargs) -> k8s.GcpSessionAffinityPolicy:
+        print("[gina] base_runner, _create_session_affinity_policy")
         saPolicy = self._create_from_template(
             template,
             custom_object=True,
@@ -512,6 +518,7 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
             saPolicy.metadata.name,
             saPolicy.metadata.creation_timestamp,
         )
+        print("[gina] base_runner, GCPSessionAffinityPolicy created")
         return saPolicy
 
     def _create_session_affinity_filter(self, template, **kwargs) -> k8s.GcpSessionAffinityFilter:
@@ -572,16 +579,19 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
         logger.debug("GAMMA mesh %s deleted", name)
 
     def _delete_gamma_route(self, name, wait_for_deletion=True):
-        logger.info("Deleting GRPCRoute %s", name)
+        # logger.info("Deleting GRPCRoute %s", name)
+        logger.info("Deleting HTTPRoute %s", name)
         try:
             self.k8s_namespace.delete_gamma_route(name)
         except (retryers.RetryError, k8s.NotFound) as e:
-            logger.info("GRPCRoute %s deletion failed: %s", name, e)
+            # logger.info("GRPCRoute %s deletion failed: %s", name, e)
+            logger.info("HTTPRoute %s deletion failed: %s", name, e)
             return
 
         if wait_for_deletion:
             self.k8s_namespace.wait_for_get_gamma_route_deleted(name)
-        logger.debug("GRPCRoute %s deleted", name)
+        # logger.debug("GRPCRoute %s deleted", name)
+        logger.debug("HTTPRoute %s deleted", name)
 
     def _delete_session_affinity_policy(self, name, wait_for_deletion=True):
         logger.info("Deleting GCPSessionAffinityPolicy %s", name)

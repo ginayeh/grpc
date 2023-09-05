@@ -31,7 +31,8 @@ KubernetesServerRunner = k8s_xds_server_runner.KubernetesServerRunner
 class GammaServerRunner(KubernetesServerRunner):
     # Mutable state.
     mesh: Optional[k8s.GammaMesh] = None
-    route: Optional[k8s.GammaGrpcRoute] = None
+    # route: Optional[k8s.GammaGrpcRoute] = None
+    route: Optional[k8s.GammaHttpRoute] = None
 
     # Mesh
     server_xds_host: str
@@ -152,7 +153,8 @@ class GammaServerRunner(KubernetesServerRunner):
 
         # Create the route.
         self.route = self._create_gamma_route(
-            "gamma/route_grpc.yaml",
+            # "gamma/route_grpc.yaml",
+            "gamma/route_http.yaml",
             xds_server_uri=self.server_xds_host,
             route_name=self.route_name,
             mesh_name=self.mesh_name,
@@ -208,10 +210,12 @@ class GammaServerRunner(KubernetesServerRunner):
 
     def createSessionAffinityPolicy(self):
         # TODO(ginayeh)
+        print("[gina] gamma_server_runner, createSessionAffinity")
         self.saPolicy = self._create_session_affinity_policy(
-            "gamma/session_affinity_policy.yaml",
+            "gamma/session_affinity_policy_route.yaml",
             session_affinity_policy_name="ssa-policy-1",
             namespace_name=self.k8s_namespace.name,
+            route_name=self.route_name,
         )
 
     def createSessionAffinityFilter(self):

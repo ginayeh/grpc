@@ -54,6 +54,7 @@ V1Namespace = client.V1Namespace
 DynResourceInstance = dynamic_res.ResourceInstance
 GammaMesh = DynResourceInstance
 GammaGrpcRoute = DynResourceInstance
+GammaHttpRoute = DynResourceInstance
 GcpSessionAffinityPolicy = DynResourceInstance
 GcpSessionAffinityFilter = DynResourceInstance
 
@@ -163,6 +164,18 @@ class KubernetesApiManager:
 
         return self._load_dynamic_api(api_name, version, kind)
 
+    @functools.cache  # pylint: disable=no-member
+    def http_route(self, version: str) -> dynamic_res.Resource:
+        api_name = "gateway.networking.k8s.io"
+        kind = "HTTPRoute"
+        supported_versions = {"v1beta1", "v1alpha2"}
+        if version not in supported_versions:
+            raise NotImplementedError(
+                f"{kind} {api_name}/{version} not implemented."
+            )
+
+        return self._load_dynamic_api(api_name, version, kind)
+
     def close(self):
         # TODO(sergiitk): [GAMMA] what to do with dynamic clients?
         self.client.close()
@@ -246,6 +259,13 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
         )
 
     @functools.cached_property  # pylint: disable=no-member
+    def api_http_route(self) -> dynamic_res.Resource:
+        return self._get_dynamic_api(
+            "gateway.networking.k8s.io/v1alpha2",
+            "HTTPRoute",
+        )
+
+    @functools.cached_property  # pylint: disable=no-member
     def api_session_affinity_policy(self) -> dynamic_res.Resource:
         return self._get_dynamic_api(
             "gateway.networking.k8s.io/v1beta1",
@@ -280,7 +300,9 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
 
     @functools.cache  # pylint: disable=no-member
     def _get_dynamic_api(self, api_version, kind) -> dynamic_res.Resource:
-        group, _, version = api_version.partition("/")
+        group,_, version = api_version.partition("/")
+        print(group)
+        print(version)
 
         # TODO(sergiitk): [GAMMA] Needs to be improved. This all is very clunky
         #  when considered together with _get_dynamic_api and api_gke_mesh,
@@ -292,6 +314,8 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
         elif group == "gateway.networking.k8s.io":
             if kind == "GRPCRoute":
                 return self._api.grpc_route(version)
+            elif kind == "HTTPRoute":
+                return self._api.http_route(version)
 
         raise NotImplementedError(f"{kind} {api_version} not implemented.")
 
@@ -461,9 +485,12 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
     def get_gamma_mesh(self, name) -> Optional[GammaMesh]:
         return self._get_dyn_resource(self.api_gke_mesh, name)
 
-    def get_gamma_route(self, name) -> Optional[GammaGrpcRoute]:
-        return self._get_dyn_resource(self.api_grpc_route, name)
-    
+    #def get_gamma_route(self, name) -> Optional[GammaGrpcRoute]:
+    #    return self._get_dyn_resource(self.api_grpc_route, name)
+
+    def get_gamma_route(self, name) -> Optional[GammaHttpRoute]:
+        return self._get_dyn_resource(self.api_http_route, name)
+
     def get_session_affinity_policy(self, name) -> Optional[GcpSessionAffinityPolicy]:
         return self._get_dyn_resource(self.api_session_affinity_policy, name)
 
@@ -521,7 +548,8 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
         # TODO(sergiitk): [GAMMA] Can we call delete on dynamic_res.ResourceList
         #  to avoid no-member issues due to dynamic_res.Resource proxying calls?
         self._execute(
-            self.api_grpc_route.delete,  # pylint: disable=no-member
+            # self.api_grpc_route.delete,  # pylint: disable=no-member
+            self.api_http_route.delete,  # pylint: disable=no-member
             name=name,
             namespace=self.name,
             propagation_policy="Foreground",
