@@ -32,24 +32,23 @@ class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
     def test_ping_pong(self):
         REPLICA_COUNT = 3
 
-#        test_servers: List[_XdsTestServer]
-#        with self.subTest("01_run_test_server"):
-#            test_servers = self.startTestServers(replica_count=REPLICA_COUNT)
-#            print("[gina] server[0]: " + test_servers[0].hostname)
-#            print("[gina] server[1]: " + test_servers[1].hostname)
-#            print("[gina] server[2]: " + test_servers[2].hostname)
+        test_servers: List[_XdsTestServer]
+        with self.subTest("01_run_test_server"):
+            test_servers = self.startTestServers(replica_count=REPLICA_COUNT)
+            print("[gina] server[0]: " + test_servers[0].hostname)
+            print("[gina] server[1]: " + test_servers[1].hostname)
+            print("[gina] server[2]: " + test_servers[2].hostname)
 
-#        with self.subTest("02_create_ssa_policy"):
-#            self.server_runner.createSessionAffinityPolicy()
+        with self.subTest("02_create_ssa_policy"):
+            self.server_runner.createSessionAffinityPolicy("service")
 
         # Default is round robin LB policy.
 
-        # TODO
         with self.subTest("03_start_test_client"):
-#            test_client: _XdsTestClient = self.startTestClient(test_servers[0])
-            fake_server = namedtuple("Server", ["xds_uri"])
-            fake_server.xds_uri = "xds:///ssa-test"
-            test_client: _XdsTestClient = self.startTestClient(fake_server)
+            test_client: _XdsTestClient = self.startTestClient(test_servers[0])
+#            fake_server = namedtuple("Server", ["xds_uri"])
+#            fake_server.xds_uri = "xds:///ssa-test"
+#            test_client: _XdsTestClient = self.startTestClient(0fake_server)
 
         cookie = ""
         hostname = ""
@@ -67,21 +66,21 @@ class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
             print("[gina] hostname: ", hostname)
             print("[gina] cookie: ", cookie)
 
-#        with self.subTest("05_send_RPCs_with_cookie"):
-#            print("[gina] update_config.configure")
-#            test_client.update_config.configure(
-#                rpc_types=(RpcTypeUnaryCall,),
-#                metadata=(
-#                    (
-#                        RpcTypeUnaryCall,
-#                        "cookie",
-#                        cookie,
-#                    ),
-#                ),
-#            )
-#            self.assertRpcsEventuallyGoToGivenServers(
-#                test_client, test_servers[chosenServerIdx:chosenServerIdx+1], 10
-#            )
-#
+        with self.subTest("05_send_RPCs_with_cookie"):
+            print("[gina] update_config.configure")
+            test_client.update_config.configure(
+                rpc_types=(RpcTypeUnaryCall,),
+                metadata=(
+                    (
+                        RpcTypeUnaryCall,
+                        "cookie",
+                        cookie,
+                    ),
+                ),
+            )
+            self.assertRpcsEventuallyGoToGivenServers(
+                test_client, test_servers[chosenServerIdx:chosenServerIdx+1], 10
+            )
+
 if __name__ == "__main__":
     absltest.main(failfast=True)

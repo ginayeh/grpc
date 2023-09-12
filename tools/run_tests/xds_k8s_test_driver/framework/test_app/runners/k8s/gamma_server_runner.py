@@ -208,15 +208,26 @@ class GammaServerRunner(KubernetesServerRunner):
             secure_mode=secure_mode,
         )
 
-    def createSessionAffinityPolicy(self):
+    def createSessionAffinityPolicy(self, *, target_type):
         # TODO(ginayeh)
         print("[gina] gamma_server_runner, createSessionAffinity")
-        self.saPolicy = self._create_session_affinity_policy(
-            "gamma/session_affinity_policy_route.yaml",
-            session_affinity_policy_name="ssa-policy-1",
-            namespace_name=self.k8s_namespace.name,
-            route_name=self.route_name,
-        )
+        if cmp(target_type, "route"):
+            self.saPolicy = self._create_session_affinity_policy(
+                "gamma/session_affinity_policy_route.yaml",
+                session_affinity_policy_name="ssa-policy-route",
+                namespace_name=self.k8s_namespace.name,
+                route_name=self.route_name,
+            )
+        elif cmp(target_type, "service"):
+            self.saPolicy = self._create_session_affinity_policy(
+                "gamma/session_affinity_policy_service.yaml",
+                session_affinity_policy_name="ssa-policy-service",
+                namespace_name=self.k8s_namespace.name,
+                service_name=self.service_name,
+            )
+        else:
+            # TODO add error message
+            return
 
     def createSessionAffinityFilter(self):
         self.saFilter = self._create_session_affinity_filter(
