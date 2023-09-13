@@ -42,9 +42,12 @@ class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
         with self.subTest("02_create_ssa_policy"):
             self.server_runner.createSessionAffinityPolicy("route")
 
+        with self.subTest("03_create_backend_policy"):
+            self.server_runner.createBackendPolicy()
+
         # Default is round robin LB policy.
 
-        with self.subTest("03_start_test_client"):
+        with self.subTest("04_start_test_client"):
             test_client: _XdsTestClient = self.startTestClient(test_servers[0])
 
         cookie = ""

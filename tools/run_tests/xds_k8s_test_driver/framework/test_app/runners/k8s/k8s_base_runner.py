@@ -546,6 +546,33 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
         )
         return saFilter
 
+    def _create_backend_policy(self, template, **kwargs) -> k8s.GcpBackendPolicy:
+        print("[gina] base_runner, _create_backend_policy")
+        saPolicy = self._create_from_template(
+            template,
+            custom_object=True,
+            **kwargs,
+        )
+        if not (
+            isinstance(bePolicy, k8s.GcpBackendPolicy) and bePolicy.kind == "GCPBackendPolicy"
+        ):
+            raise _RunnerError(
+                f"Expected ResourceInstance[GCPBackendPolicy] to be"
+                f" created from manifest {template}"
+            )
+        if bePolicy.metadata.name != kwargs["be_policy_name"]:
+            raise _RunnerError(
+                "ResourceInstance[GCPBackendPolicy] created with"
+                f" unexpected name: {bePolicy.metadata.name}"
+            )
+        logger.debug(
+            "ResourceInstance[GCPBackendPolicy] %s created at %s",
+            bePolicy.metadata.name,
+            bePolicy.metadata.creation_timestamp,
+        )
+        print("[gina] base_runner, GCPBackendPolicy created")
+        return bePolicy
+
     def _create_service(self, template, **kwargs) -> k8s.V1Service:
         service = self._create_from_template(template, **kwargs)
         if not isinstance(service, k8s.V1Service):
@@ -616,6 +643,18 @@ class KubernetesBaseRunner(base_runner.BaseRunner, metaclass=ABCMeta):
         if wait_for_deletion:
             self.k8s_namespace.wait_for_get_session_affinity_filter_deleted(name)
         logger.debug("GCPSessionAffinityFilter %s deleted", name)
+
+    def _delete_backend_policy(self, name, wait_for_deletion=True):
+        logger.info("Deleting GCPBackendPolicy %s", name)
+        try:
+            self.k8s_namespace.delete_backend_policy(name)
+        except (retryers.RetryError, k8s.NotFound) as e:
+            logger.info("GGCPBackendPolicy %s deletion failed: %s", name, e)
+            return
+
+        if wait_for_deletion:
+            self.k8s_namespace.wait_for_get_backend_policy_deleted(name)
+        logger.debug("GCPBackendPolicy %s deleted", name)
 
     def _delete_deployment(self, name, wait_for_deletion=True):
         logger.info("Deleting deployment %s", name)

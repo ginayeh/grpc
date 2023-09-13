@@ -57,6 +57,7 @@ GammaGrpcRoute = DynResourceInstance
 GammaHttpRoute = DynResourceInstance
 GcpSessionAffinityPolicy = DynResourceInstance
 GcpSessionAffinityFilter = DynResourceInstance
+GcpBackendPolicy = DynResourceInstance
 
 _timedelta = datetime.timedelta
 _ApiException = client.ApiException
@@ -268,15 +269,22 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
     @functools.cached_property  # pylint: disable=no-member
     def api_session_affinity_policy(self) -> dynamic_res.Resource:
         return self._get_dynamic_api(
-            "gateway.networking.k8s.io/v1beta1",
+            "networking.gke.io/v1",
             "GCPSessionAffinityPolicy",
         )
 
     @functools.cached_property  # pylint: disable=no-member
     def api_session_affinity_filter(self) -> dynamic_res.Resource:
         return self._get_dynamic_api(
-            "gateway.networking.k8s.io/v1beta1",
+            "networking.gke.io/v1",
             "GCPSessionAffinityFilter",
+        )
+
+    @functools.cached_property  # pylint: disable=no-member
+    def api_backend_policy(self) -> dynamic_res.Resource:
+        return self._get_dynamic_api(
+            "networking.gke.io/v1",
+            "GCPBackendPolicy",
         )
 
     def _refresh_auth(self):
@@ -494,6 +502,12 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
     def get_session_affinity_policy(self, name) -> Optional[GcpSessionAffinityPolicy]:
         return self._get_dyn_resource(self.api_session_affinity_policy, name)
 
+    def get_session_affinity_filter(self, name) -> Optional[GcpSessionAffinityFilter]:
+        return self._get_dyn_resource(self.api_session_affinity_filter, name)
+
+    def get_backend_policy(self, name) -> Optional[GcpBackendPolicy]:
+        return self._get_dyn_resource(self.api_backend_policy, name)
+
     def get_service_account(self, name) -> V1Service:
         return self._get_resource(
             self._api.core.read_namespaced_service_account, name, self.name
@@ -569,6 +583,32 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
             grace_period_seconds=grace_period_seconds,
         )
 
+    def delete_session_affinity_filter(
+        self,
+        name: str,
+        grace_period_seconds=DELETE_GRACE_PERIOD_SEC,
+    ) -> None:
+        self._execute(
+            self.api_session_affinity_filter.delete,
+            name=name,
+            namespace=self.name,
+            propagation_policy="Foreground",
+            grace_period_seconds=grace_period_seconds,
+        )
+
+    def delete_backend_policy(
+        self,
+        name: str,
+        grace_period_seconds=DELETE_GRACE_PERIOD_SEC,
+    ) -> None:
+        self._execute(
+            self.api_backend_policy.delete,
+            name=name,
+            namespace=self.name,
+            propagation_policy="Foreground",
+            grace_period_seconds=grace_period_seconds,
+        )
+
     def get(self) -> V1Namespace:
         return self._get_resource(self._api.core.read_namespace, self.name)
 
@@ -634,7 +674,31 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
         )
         retryer(self.get_session_affinity_policy, name)
 
+    def wait_for_get_session_affinity_filter_deleted(
+        self,
+        name: str,
+        timeout_sec: int = WAIT_MEDIUM_TIMEOUT_SEC,
+        wait_sec: int = WAIT_MEDIUM_SLEEP_SEC,
+    ) -> None:
+        retryer = retryers.constant_retryer(
+            wait_fixed=_timedelta(seconds=wait_sec),
+            timeout=_timedelta(seconds=timeout_sec),
+            check_result=lambda policy: policy is None,
+        )
+        retryer(self.get_session_affinity_filter, name)
 
+    def wait_for_get_backend_policy_deleted(
+        self,
+        name: str,
+        timeout_sec: int = WAIT_MEDIUM_TIMEOUT_SEC,
+        wait_sec: int = WAIT_MEDIUM_SLEEP_SEC,
+    ) -> None:
+        retryer = retryers.constant_retryer(
+            wait_fixed=_timedelta(seconds=wait_sec),
+            timeout=_timedelta(seconds=timeout_sec),
+            check_result=lambda policy: policy is None,
+        )
+        retryer(self.get_backend_policy, name)
 
     def wait_for_service_account_deleted(
         self,

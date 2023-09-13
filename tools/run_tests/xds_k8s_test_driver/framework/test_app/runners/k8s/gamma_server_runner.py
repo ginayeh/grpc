@@ -212,16 +212,18 @@ class GammaServerRunner(KubernetesServerRunner):
         # TODO(ginayeh)
         print("[gina] gamma_server_runner, createSessionAffinity")
         if cmp(target_type, "route"):
+            self.sapolicy_name = "ssa-policy-route"
             self.saPolicy = self._create_session_affinity_policy(
                 "gamma/session_affinity_policy_route.yaml",
-                session_affinity_policy_name="ssa-policy-route",
+                session_affinity_policy_name=self.sapolicy_name,
                 namespace_name=self.k8s_namespace.name,
                 route_name=self.route_name,
             )
         elif cmp(target_type, "service"):
+            self.sapolicy_name = "ssa-policy-service"
             self.saPolicy = self._create_session_affinity_policy(
                 "gamma/session_affinity_policy_service.yaml",
-                session_affinity_policy_name="ssa-policy-service",
+                session_affinity_policy_name=self.sapolicy_name,
                 namespace_name=self.k8s_namespace.name,
                 service_name=self.service_name,
             )
@@ -230,10 +232,22 @@ class GammaServerRunner(KubernetesServerRunner):
             return
 
     def createSessionAffinityFilter(self):
+        self.safilter_name = "ssa-filter"
         self.saFilter = self._create_session_affinity_filter(
             "gamma/session_affinity_filter.yaml",
-            session_affinity_filter_name="ssa-filter-1",
+            session_affinity_filter_name=self.safilter_name,
             namespace_name=self.k8s_namespace.name,
+        )
+
+    def createBackendPolicy(self, *, target_type):
+        # TODO(ginayeh)
+        print("[gina] gamma_server_runner, createBackendPolicy")
+        self.bepolicy_name = "be-policy"
+        self.bePolicy = self._create_backend_policy(
+            "gamma/backend_policy.yaml",
+            be_policy_name=self.bepolicy_name,
+            namespace_name=self.k8s_namespace.name,
+            service_name=self.service_name,
         )
 
     # pylint: disable=arguments-differ
@@ -253,6 +267,18 @@ class GammaServerRunner(KubernetesServerRunner):
             if self.deployment or force:
                 self._delete_deployment(self.deployment_name)
                 self.deployment = None
+
+            if self.saPolicy or force:
+              self._delete_session_affinity_policy(self.sapolicy_name)
+              self.saPolicy = None
+
+            if self.saFitler or force:
+              self._delete_session_affinity_filter(self.safilter_name)
+              self.saFilter = None
+
+            if self.bePolicy or force:
+              self._delete_backend_policy(self.bepolicy_name)
+              self.bePolicy = None
 
             if self.enable_workload_identity and (
                 self.service_account or force
