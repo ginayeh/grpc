@@ -262,16 +262,16 @@ class GammaServerRunner(KubernetesServerRunner):
                 self.deployment = None
 
             if self.saPolicy or force:
-              self._delete_session_affinity_policy(self.sapolicy_name)
-              self.saPolicy = None
+                self._delete_session_affinity_policy(self.sapolicy_name)
+                self.saPolicy = None
 
             if self.saFitler or force:
-              self._delete_session_affinity_filter(self.safilter_name)
-              self.saFilter = None
+                self._delete_session_affinity_filter(self.safilter_name)
+                self.saFilter = None
 
             if self.bePolicy or force:
-              self._delete_backend_policy(self.bepolicy_name)
-              self.bePolicy = None
+                self._delete_backend_policy(self.bepolicy_name)
+                self.bePolicy = None
 
             if self.enable_workload_identity and (
                 self.service_account or force

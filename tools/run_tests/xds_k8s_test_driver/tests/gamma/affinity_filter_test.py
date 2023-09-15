@@ -27,6 +27,7 @@ _XdsTestServer = xds_k8s_testcase.XdsTestServer
 _XdsTestClient = xds_k8s_testcase.XdsTestClient
 RpcTypeUnaryCall = xds_url_map_testcase.RpcTypeUnaryCall
 
+
 class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
     def test_ping_pong(self):
         REPLICA_COUNT = 3
@@ -68,8 +69,11 @@ class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
                 ),
             )
             self.assertRpcsEventuallyGoToGivenServers(
-                test_client, test_servers[chosenServerIdx:chosenServerIdx+1], 10
+                test_client,
+                test_servers[chosenServerIdx : chosenServerIdx + 1],
+                10,
             )
+
 
 if __name__ == "__main__":
     absltest.main(failfast=True)

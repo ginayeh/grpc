@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 from collections import namedtuple
+import logging
 
 from absl import flags
 from absl.testing import absltest
@@ -27,6 +27,7 @@ flags.adopt_module_key_flags(xds_k8s_testcase)
 _XdsTestServer = xds_k8s_testcase.XdsTestServer
 _XdsTestClient = xds_k8s_testcase.XdsTestClient
 RpcTypeUnaryCall = xds_url_map_testcase.RpcTypeUnaryCall
+
 
 class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
     def test_ping_pong(self):
@@ -72,13 +73,15 @@ class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
                 ),
             )
             self.assertRpcsEventuallyGoToGivenServers(
-                test_client, test_servers[chosenServerIdx:chosenServerIdx+1], 10
+                test_client,
+                test_servers[chosenServerIdx : chosenServerIdx + 1],
+                10,
             )
 
         with self.subTest("06_set_server_to_unhealthy"):
             test_servers[chosenServerIdx].set_not_serving()
-            healthy_servers = test_servers;
-            healthy_servers.pop(chosenServerIdx);
+            healthy_servers = test_servers
+            healthy_servers.pop(chosenServerIdx)
             self.assertRpcsEventuallyGoToGivenServers(
                 test_client, healthy_servers, 10
             )
@@ -86,8 +89,11 @@ class AffinityTest(xds_gamma_testcase.GammaXdsKubernetesTestCase):
         with self.subTest("07_set_server_back_to_healthy"):
             test_servers[chosenServerIdx].set_serving()
             self.assertRpcsEventuallyGoToGivenServers(
-                test_client, test_servers[chosenServerIdx:chosenServerIdx+1], 10
+                test_client,
+                test_servers[chosenServerIdx : chosenServerIdx + 1],
+                10,
             )
+
 
 if __name__ == "__main__":
     absltest.main(failfast=True)

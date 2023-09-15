@@ -494,10 +494,14 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
     def get_gamma_route(self, name) -> Optional[GammaHttpRoute]:
         return self._get_dyn_resource(self.api_http_route, name)
 
-    def get_session_affinity_policy(self, name) -> Optional[GcpSessionAffinityPolicy]:
+    def get_session_affinity_policy(
+        self, name
+    ) -> Optional[GcpSessionAffinityPolicy]:
         return self._get_dyn_resource(self.api_session_affinity_policy, name)
 
-    def get_session_affinity_filter(self, name) -> Optional[GcpSessionAffinityFilter]:
+    def get_session_affinity_filter(
+        self, name
+    ) -> Optional[GcpSessionAffinityFilter]:
         return self._get_dyn_resource(self.api_session_affinity_filter, name)
 
     def get_backend_policy(self, name) -> Optional[GcpBackendPolicy]:

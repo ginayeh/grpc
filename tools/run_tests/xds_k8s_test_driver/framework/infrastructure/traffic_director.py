@@ -215,7 +215,9 @@ class TrafficDirectorManager:  # pylint: disable=too-many-public-methods
             protocol = _SessionAffinityHTTP
 
         name = self.make_resource_name(self.SESSION_AFFINITY_NAME)
-        logger.info('Creating %s Session Affinity Policy "%s"', protocol.name, name)
+        logger.info(
+            'Creating %s Session Affinity Policy "%s"', protocol.name, name
+        )
         resource = self.compute.create_session_affinity_policy(name, protocol)
         self.session_affinity_policy = resource
 
